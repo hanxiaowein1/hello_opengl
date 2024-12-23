@@ -1,5 +1,5 @@
-#ifndef __CHARLES_OPENGL_CHAOS_H__
-#define __CHARLES_OPENGL_CHAOS_H__
+#ifndef __CHARLES_OPENGL_CHAOS_SHADER_H__
+#define __CHARLES_OPENGL_CHAOS_SHADER_H__
 
 #include "glad/glad.h"
 #include <string>
@@ -9,6 +9,7 @@ class Shader
 public:
 	unsigned int m_program_id;
 	Shader(const char* vertex_shader_path, const char* fragment_shader_path);
+	Shader() = default;
 	~Shader() = default;
 	void use();
 	void set_uniform1(const std::string& name, bool value) const;

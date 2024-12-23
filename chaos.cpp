@@ -1,5 +1,6 @@
 #include "chaos.h"
 #include <iostream>
+#include <format>
 #include "glad/glad.h"
 #include "GLFW/glfw3.h"
 
@@ -25,6 +26,7 @@ void check_shader_compile_status(unsigned int shader_id, const char* append_shad
 	{
 		glGetShaderInfoLog(shader_id, 512, NULL, shader_info_log);
 		std::cout << append_shader_info << shader_info_log << std::endl;
+		throw std::exception(std::format("sharder id {} compile failed", shader_id).c_str());
 	}
 }
 
@@ -37,5 +39,6 @@ void check_program_link_status(unsigned int program_id, const char* append_info)
 	{
 		glGetProgramInfoLog(program_id, 512, NULL, info_log);
 		std::cout << append_info << info_log << std::endl;
+		throw std::exception(std::format("sharder id {} link failed", program_id).c_str());
 	}
 }

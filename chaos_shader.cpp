@@ -2,6 +2,7 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <format>
 #include "chaos.h"
 #include "chaos_shader.h"
 
@@ -40,19 +41,40 @@ Shader::Shader(const char* vertex_shader_path, const char* fragment_shader_path)
 	vertex_shader = glCreateShader(GL_VERTEX_SHADER);
 	glShaderSource(vertex_shader, 1, &v_shader_code, NULL);
 	glCompileShader(vertex_shader);
-	check_shader_compile_status(vertex_shader, "ERROR::SHADER:VERTEX::COMPILATION_FAILED\n");
+	try
+	{
+		check_shader_compile_status(vertex_shader, "ERROR::SHADER:VERTEX::COMPILATION_FAILED\n");
+	}
+	catch(const std::exception& e)
+	{
+		throw std::exception(std::format("vertex shader compile failed, vertex shader path: {}", vertex_shader_path).c_str());
+	}
 
 	fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
 	glShaderSource(fragment_shader, 1, &f_shader_code, NULL);
 	glCompileShader(fragment_shader);
-	check_shader_compile_status(vertex_shader, "ERROR::SHADER:FRAGMENT::COMPILATION_FAILED\n");
+	try
+	{
+		check_shader_compile_status(vertex_shader, "ERROR::SHADER:FRAGMENT::COMPILATION_FAILED\n");
+	}
+	catch(const std::exception& e)
+	{
+		throw std::exception(std::format("fragment shader compile failed, fragment shader path: {}", fragment_shader_path).c_str());
+	}
 
 	// shader program
 	this->m_program_id = glCreateProgram();
 	glAttachShader(this->m_program_id, vertex_shader);
 	glAttachShader(this->m_program_id, fragment_shader);
 	glLinkProgram(this->m_program_id);
-	check_program_link_status(this->m_program_id, "ERROR::SHADER::PROGRAM::LINK_FAILED\n");
+	try
+	{
+		check_program_link_status(this->m_program_id, "ERROR::SHADER::PROGRAM::LINK_FAILED\n");
+	}
+	catch(const std::exception& e)
+	{
+		throw std::exception(std::format("shader program link failed, vertex shader path: {}, fragment shader path: {}", vertex_shader_path, fragment_shader_path).c_str());
+	}
 
 	glDeleteShader(vertex_shader);
 	glDeleteShader(fragment_shader);

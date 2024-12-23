@@ -1,5 +1,93 @@
 #include "unit_test.h"
 #include "chaos.h"
+#include "chaos_shader.h"
+#include "chaos_shower.h"
+
+TEST(GlobalTest, draw_two_triangle_by_two_vao)
+{
+    glfwInit();
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	GLFWwindow* window = glfwCreateWindow(800, 600, "LearnOpenGL", NULL, NULL);
+	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+	if (window == NULL)
+	{
+		std::cout << "Failed to create GLFW window" << std::endl;
+		glfwTerminate();
+		throw std::exception("Failed to create GLFW window");
+	}
+	glfwMakeContextCurrent(window);
+
+	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+	{
+		std::cout << "Failed to initialize GLAD" << std::endl;
+		throw std::exception("Failed to create GLFW window");
+	}
+    Shader self_shader(
+        "D:\\Projects\\hello_opengl\\shader\\draw_triangle_shader_vs.glsl",
+        "D:\\Projects\\hello_opengl\\shader\\draw_triangle_shader_fs.glsl"
+    );
+
+    Shader self_shader2(
+        "D:\\Projects\\hello_opengl\\shader\\draw_triangle_shader_vs.glsl",
+        "D:\\Projects\\hello_opengl\\shader\\draw_triangle_shader_fs_2.glsl"
+    );
+
+    std::vector<float> vertices1{
+        -0.5f, 0, 0,
+        -0.5f, 0.5f, 0,
+        0.5f, 0.5f, 0,
+    };
+
+    // generate EBO
+    std::vector<unsigned int> indices1 = {
+        0, 1, 2, // first triangle
+    };
+
+    ChaosShower shower1(vertices1, indices1, self_shader);
+
+	// VAO
+	unsigned int VAO2;
+	glGenVertexArrays(1, &VAO2);
+	glBindVertexArray(VAO2);
+
+    std::vector<float> vertices2 = {
+		-0.5f, 0, 0,
+		0.5f, 0.5f, 0,
+		0.5f, 0, 0
+	};
+
+	// generate EBO
+	std::vector<unsigned int> indices2 = {
+		0, 1, 2, // first triangle
+	};
+    ChaosShower shower2(vertices2, indices2, self_shader2);
+
+	while (!glfwWindowShouldClose(window))
+	{
+		processInput(window);
+		//glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+		glClearColor(0.2f, 0.0f, 0.0f, 1.0f);
+
+		glClear(GL_COLOR_BUFFER_BIT);
+
+        shower1.show();
+        // self_shader.use();
+		// glBindVertexArray(VAO);
+		// glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
+
+        shower2.show();
+        // self_shader2.use();
+        // glBindVertexArray(VAO2);
+		// glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
+
+		glfwSwapBuffers(window);
+		glfwPollEvents();
+	}
+	glfwTerminate();
+
+}
 
 TEST(GlobalTest, draw_two_triangle)
 {
