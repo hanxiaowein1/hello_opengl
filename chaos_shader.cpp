@@ -3,7 +3,7 @@
 #include <sstream>
 #include <iostream>
 #include <format>
-#include "chaos.h"
+#include "opengl_chaos.h"
 #include "chaos_shader.h"
 
 Shader::Shader(const char* vertex_shader_path, const char* fragment_shader_path)

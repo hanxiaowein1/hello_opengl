@@ -1,7 +1,7 @@
 #ifndef __CHARLES_OPENGL_CHAOS_CAMERA_H_
 #define __CHARLES_OPENGL_CHAOS_CAMERA_H_
 
-#include "chaos.h"
+#include "opengl_chaos.h"
 #include "glad/glad.h"
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"

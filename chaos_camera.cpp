@@ -79,7 +79,6 @@ void Camera::process_keyboard(CameraMovement direction, float delta_time)
         this->m_position = this->m_position + this->m_right * velocity;
         //this->m_position.x = this->m_position.x + this->m_front.x * velocity;
     }
-    std::cout << std::format("camera position: x={}, y={}, z={}", this->m_position.x, this->m_position.y, this->m_position.z) << std::endl;
 }
 
 void Camera::process_mouse_movement(float x_offset, float y_offset, bool constrain_pitch)

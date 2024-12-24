@@ -1,5 +1,5 @@
 #include "unit_test.h"
-#include "chaos.h"
+#include "opengl_chaos.h"
 #include "chaos_shader.h"
 #include "chaos_shower.h"
 

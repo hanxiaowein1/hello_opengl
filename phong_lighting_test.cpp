@@ -1,12 +1,9 @@
-#include <iostream>
-
 #include "unit_test.h"
 
 #include "opengl_chaos.h"
 #include "chaos_shader.h"
-#include "chaos_shader.h"
-#include "chaos_shower.h"
 #include "chaos_camera.h"
+#include "chaos_shower.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -70,13 +67,14 @@ void processInput2(GLFWwindow* window)
 	}
 }
 
-TEST(GlobalTest, camera_move_test)
+TEST(GlobalTest, phong_lighting_test)
 {
+
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	GLFWwindow* window = glfwCreateWindow(800, 600, "LearnOpenGL", NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow(1920, 1080, "LearnOpenGL", NULL, NULL);
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 	glfwSetCursorPosCallback(window, mouse_callback);
 	glfwSetScrollCallback(window, scroll_callback);
@@ -98,34 +96,28 @@ TEST(GlobalTest, camera_move_test)
 	glEnable(GL_DEPTH_TEST);
 
 	Shader self_shader(
-        "D:\\Projects\\hello_opengl\\shader\\mvp_test_shader_vs.glsl",
-        "D:\\Projects\\hello_opengl\\shader\\mvp_test_shader_fs.glsl"
+        "D:\\Projects\\hello_opengl\\shader\\phong_lighting_vs.glsl",
+        "D:\\Projects\\hello_opengl\\shader\\phong_lighting_fs.glsl"
     );
-    std::vector<float> vertices1{
-		0, 0, 0,
-		0.5f, 0, 0,
-		0, 0.5f, 0,
+    std::vector<OpenGLVertex> vertices1{
+		{0, 0, 0, 0, 0, 1}, 
+		{0.5f, 0, 0, 0, 0, 1},
+		{0, 0.5f, 0, 0, 0, 1}
     };
     std::vector<unsigned int> indices1{
         0, 1, 2,
     };
     ChaosShower shower1(vertices1, indices1, self_shader);
 
-    Shader self_shader2(
-        "D:\\Projects\\hello_opengl\\shader\\mvp_test_shader_vs.glsl",
-        "D:\\Projects\\hello_opengl\\shader\\mvp_test_shader_fs_2.glsl"
-    );
-    std::vector<float> vertices2{
-		0.5f, 0, 0,
-		0, 0.5f, 0,
-		//0.7f, 0.7f, 0.3f
-		//0.7f, 0.7f, -300.0f
-		0.7f, 0.7f, 0.1f
+    std::vector<OpenGLVertex> vertices2{
+		{0.5f, 0, 0, 0.05f, 0.05f, -0.45f},
+		{0, 0.5f, 0, 0.05f, 0.05f, -0.45f},
+		{0.7f, 0.7f, 0.1f, 0.05f, 0.05f, -0.45f}
     };
     std::vector<unsigned int> indices2{
         0, 1, 2,
     };
-    ChaosShower shower2(vertices2, indices2, self_shader2);
+    ChaosShower shower2(vertices2, indices2, self_shader);
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -141,11 +133,14 @@ TEST(GlobalTest, camera_move_test)
         shower1.shader.set_mat4("view", view);
         shower1.shader.set_mat4("projection", projection);
         shower1.shader.set_mat4("model", model);
+		// shower1.shader.set_uniform3("objectColor", 1.0f, 0.0f, 0.0f);
+		shower1.shader.set_uniform3("objectColor", 0.5f, 0.5f, 0.5f);
+		shower1.shader.set_uniform3("lightColor", 1.0f, 1.0f, 1.0f);
+		shower1.shader.set_vec3("viewPos", g_camera.m_position);
+		shower1.shader.set_uniform3("lightPos", 1.2f, 1.0f, 2.0f);
 		shower1.show();
         // glDrawArrays(GL_TRIANGLES, 0, 36);
-		shower2.shader.set_mat4("view", view);
-		shower2.shader.set_mat4("projection", projection);
-		shower2.shader.set_mat4("model", model);
+		shower1.shader.set_uniform3("objectColor", 0.0f, 1.0f, 0.0f);
 		shower2.show();
 
 		float currentFrame = glfwGetTime();
@@ -156,4 +151,5 @@ TEST(GlobalTest, camera_move_test)
 		glfwPollEvents();
 	}
 	glfwTerminate();
+
 }
