@@ -11,7 +11,7 @@ find_package(GTest CONFIG REQUIRED)
 add_executable(
     ${PROJECT_NAME}_test
     draw_triangle_test.cpp
-    chaos.cpp
+    opengl_chaos.cpp
     chaos_shader.cpp
     chaos_camera.cpp
     chaos_shower.cpp
