@@ -115,6 +115,11 @@ void Camera::process_mouse_scroll(float y_offset)
     }
 }
 
+void Camera::scorll_control_position(float y_offset)
+{
+    this->m_position = this->m_position + this->m_front * y_offset;
+}
+
 glm::mat4 Camera::get_projection_matrix()
 {
     glm::mat4 projection;

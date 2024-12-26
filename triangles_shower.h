@@ -26,12 +26,14 @@ extern Camera g_camera;
 extern float deltaTime;  // Time between current frame and last frame
 extern float lastFrame;  // Time of last frame
 
-extern float g_last_x;
-extern float g_last_y;
-extern bool g_first_mouse;
+extern float g_yaw;
+extern float g_pitch;
 
-void mouse_callback(GLFWwindow* window, double xpos, double ypos);
+void mouse_move_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
+void scroll_control_distance(GLFWwindow* window, double xoffset, double yoffset);
+void mouse_move_rotate(GLFWwindow* window, double xpos, double ypos);
 
 void processInput2(GLFWwindow* window);
 
@@ -141,8 +143,15 @@ std::vector<unsigned int> convert_triangle(std::vector<T>& triangles)
     return indices;
 }
 
+/**
+ * @brief this is more useful to game scene, not many useful to model viewer.
+ * 
+ * @tparam V 
+ * @tparam T 
+ * @param mul_display_info 
+ */
 template <typename V, typename T>
-void show_triangles(std::vector<DisplayInfo<V, T>> &mul_display_info)
+void show_triangles_with_game_player(std::vector<DisplayInfo<V, T>> &mul_display_info)
 {
     for (auto& display_info : mul_display_info)
     {
@@ -157,8 +166,169 @@ void show_triangles(std::vector<DisplayInfo<V, T>> &mul_display_info)
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	GLFWwindow* window = glfwCreateWindow(1920, 1080, "LearnOpenGL", NULL, NULL);
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-	glfwSetCursorPosCallback(window, mouse_callback);
+	glfwSetCursorPosCallback(window, mouse_move_callback);
 	glfwSetScrollCallback(window, scroll_callback);
+    glfwSetMouseButtonCallback(window, mouse_button_callback);
+	if (window == NULL)
+	{
+        std::string err_msg = "Failed to create GLFW window";
+		std::cout << err_msg << std::endl;
+		glfwTerminate();
+        throw std::exception(err_msg.c_str());
+	}
+	glfwMakeContextCurrent(window);
+
+	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+	{
+        std::string err_msg = "Failed to initialize GLAD";
+		std::cout << err_msg << std::endl;
+		throw std::exception(err_msg.c_str());
+	}
+	glEnable(GL_DEPTH_TEST);
+
+	Shader self_shader(
+        "D:\\Projects\\hello_opengl\\shader\\6.multiple_lights_vs.glsl",
+        "D:\\Projects\\hello_opengl\\shader\\6.multiple_lights_fs.glsl"
+    );
+    std::vector<ChaosShower> chaos_showers;
+    for(auto display_info: mul_display_info)
+    {
+        std::vector<OpenGLVertex> opengl_vertices = convert_vertex(display_info.vertices, display_info.normals, display_info.triangles);
+        std::vector<unsigned int> indices = convert_triangle(display_info.triangles);
+        ChaosShower chaos_shower(opengl_vertices, indices, self_shader);
+        chaos_showers.emplace_back(chaos_shower);
+    }
+
+    // positions of the point lights
+    glm::vec3 pointLightPositions[] = {
+        glm::vec3(0.0f,  -100.0f, 0.0f),
+        glm::vec3(0, 50, 100),
+        glm::vec3(87, 50, -50),
+        glm::vec3(-87,  50, -50)
+    };
+
+	while (!glfwWindowShouldClose(window))
+	{
+		processInput2(window);
+
+		glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        auto view = g_camera.get_view_matrix();
+        auto projection = g_camera.get_projection_matrix();
+        glm::mat4 model = glm::mat4(1.0f);
+
+        self_shader.set_mat4("view", view);
+        self_shader.set_mat4("projection", projection);
+        self_shader.set_mat4("model", model);
+
+
+        // self_shader.set_uniform3("lightColor", 1.0f, 1.0f, 1.0f);
+        self_shader.set_vec3("viewPos", g_camera.m_position);
+        // self_shader.set_uniform3("lightPos", 1.2f, 1.0f, 2.0f);
+
+
+        /*
+           Here we set all the uniforms for the 5/6 types of lights we have. We have to set them manually and index 
+           the proper PointLight struct in the array to set each uniform variable. This can be done more code-friendly
+           by defining light types as classes and set their values in there, or by using a more efficient uniform approach
+           by using 'Uniform buffer objects', but that is something we'll discuss in the 'Advanced GLSL' tutorial.
+        */
+        // directional light
+        self_shader.set_vec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
+        self_shader.set_vec3("dirLight.ambient", 0.05f, 0.05f, 0.05f);
+        self_shader.set_vec3("dirLight.diffuse", 0.4f, 0.4f, 0.4f);
+        self_shader.set_vec3("dirLight.specular", 0.5f, 0.5f, 0.5f);
+        // point light 1
+        self_shader.set_vec3("pointLights[0].position", pointLightPositions[0]);
+        self_shader.set_vec3("pointLights[0].ambient", 0.2f, 0.2f, 0.2f);
+        self_shader.set_vec3("pointLights[0].diffuse", 0.8f, 0.8f, 0.8f);
+        self_shader.set_vec3("pointLights[0].specular", 1.0f, 1.0f, 1.0f);
+        self_shader.set_uniform1("pointLights[0].constant", 1.0f);
+        self_shader.set_uniform1("pointLights[0].linear", 0.09f);
+        self_shader.set_uniform1("pointLights[0].quadratic", 0.032f);
+        // point light 2
+        self_shader.set_vec3("pointLights[1].position", pointLightPositions[1]);
+        self_shader.set_vec3("pointLights[1].ambient", 0.2f, 0.2f, 0.2f);
+        self_shader.set_vec3("pointLights[1].diffuse", 0.8f, 0.8f, 0.8f);
+        self_shader.set_vec3("pointLights[1].specular", 1.0f, 1.0f, 1.0f);
+        self_shader.set_uniform1("pointLights[1].constant", 1.0f);
+        self_shader.set_uniform1("pointLights[1].linear", 0.09f);
+        self_shader.set_uniform1("pointLights[1].quadratic", 0.032f);
+        // point light 3
+        self_shader.set_vec3("pointLights[2].position", pointLightPositions[2]);
+        self_shader.set_vec3("pointLights[2].ambient", 0.2f, 0.2f, 0.2f);
+        self_shader.set_vec3("pointLights[2].diffuse", 0.8f, 0.8f, 0.8f);
+        self_shader.set_vec3("pointLights[2].specular", 1.0f, 1.0f, 1.0f);
+        self_shader.set_uniform1("pointLights[2].constant", 1.0f);
+        self_shader.set_uniform1("pointLights[2].linear", 0.09f);
+        self_shader.set_uniform1("pointLights[2].quadratic", 0.032f);
+        // point light 4
+        self_shader.set_vec3("pointLights[3].position", pointLightPositions[3]);
+        self_shader.set_vec3("pointLights[3].ambient", 0.2f, 0.2f, 0.2f);
+        self_shader.set_vec3("pointLights[3].diffuse", 0.8f, 0.8f, 0.8f);
+        self_shader.set_vec3("pointLights[3].specular", 1.0f, 1.0f, 1.0f);
+        self_shader.set_uniform1("pointLights[3].constant", 1.0f);
+        self_shader.set_uniform1("pointLights[3].linear", 0.09f);
+        self_shader.set_uniform1("pointLights[3].quadratic", 0.032f);
+        // spotLight
+        self_shader.set_vec3("spotLight.position", g_camera.m_position);
+        self_shader.set_vec3("spotLight.direction", g_camera.m_front);
+        self_shader.set_vec3("spotLight.ambient", 0.0f, 0.0f, 0.0f);
+        self_shader.set_vec3("spotLight.diffuse", 1.0f, 1.0f, 1.0f);
+        self_shader.set_vec3("spotLight.specular", 1.0f, 1.0f, 1.0f);
+        self_shader.set_uniform1("spotLight.constant", 1.0f);
+        self_shader.set_uniform1("spotLight.linear", 0.09f);
+        self_shader.set_uniform1("spotLight.quadratic", 0.032f);
+        self_shader.set_uniform1("spotLight.cutOff", glm::cos(glm::radians(12.5f)));
+        self_shader.set_uniform1("spotLight.outerCutOff", glm::cos(glm::radians(15.0f)));
+
+        for(int i = 0; i < chaos_showers.size(); i++)
+        {
+            auto& chaos_shower = chaos_showers[i];
+            self_shader.set_uniform3("objectColor", mul_display_info[i].r, mul_display_info[i].g, mul_display_info[i].b);
+            chaos_shower.show();
+        }
+		// shower1.show();
+		// shower1.shader.set_uniform3("objectColor", 0.0f, 1.0f, 0.0f);
+		// shower2.show();
+
+		float currentFrame = glfwGetTime();
+		deltaTime = currentFrame - lastFrame;
+		lastFrame = currentFrame;
+
+		glfwSwapBuffers(window);
+		glfwPollEvents();
+	}
+	glfwTerminate();
+}
+
+/**
+ * @brief in model viewer, all we need is rotate model, and use scroll to move close and far
+ * 
+ * @tparam V 
+ * @tparam T 
+ * @param mul_display_info 
+ */
+template <typename V, typename T>
+void show_triangles_with_model_viewer(std::vector<DisplayInfo<V, T>> &mul_display_info)
+{
+        for (auto& display_info : mul_display_info)
+    {
+        if (display_info.normals.size() != display_info.triangles.size())
+        {
+            throw std::exception("normals triangles size doesn't equal!");
+        }
+    }
+	glfwInit();
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	GLFWwindow* window = glfwCreateWindow(1920, 1080, "LearnOpenGL", NULL, NULL);
+	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+	glfwSetCursorPosCallback(window, mouse_move_rotate);
+	glfwSetScrollCallback(window, scroll_control_distance);
+    glfwSetMouseButtonCallback(window, mouse_button_callback);
 	if (window == NULL)
 	{
         std::string err_msg = "Failed to create GLFW window";
@@ -188,54 +358,43 @@ void show_triangles(std::vector<DisplayInfo<V, T>> &mul_display_info)
         ChaosShower chaos_shower(opengl_vertices, indices, self_shader);
         chaos_showers.emplace_back(chaos_shower);
     }
-    // std::vector<OpenGLVertex> vertices1{
-	// 	{0, 0, 0, 0, 0, 1}, 
-	// 	{0.5f, 0, 0, 0, 0, 1},
-	// 	{0, 0.5f, 0, 0, 0, 1}
-    // };
-    // std::vector<unsigned int> indices1{
-    //     0, 1, 2,
-    // };
-    // ChaosShower shower1(vertices1, indices1, self_shader);
-
-    // std::vector<OpenGLVertex> vertices2{
-	// 	{0.5f, 0, 0, 0.05f, 0.05f, -0.45f},
-	// 	{0, 0.5f, 0, 0.05f, 0.05f, -0.45f},
-	// 	{0.7f, 0.7f, 0.1f, 0.05f, 0.05f, -0.45f}
-    // };
-    // std::vector<unsigned int> indices2{
-    //     0, 1, 2,
-    // };
-    // ChaosShower shower2(vertices2, indices2, self_shader);
 
 	while (!glfwWindowShouldClose(window))
 	{
 		processInput2(window);
 
-		glClearColor(0.2f, 0.0f, 0.0f, 1.0f);
+		glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         auto view = g_camera.get_view_matrix();
         auto projection = g_camera.get_projection_matrix();
         glm::mat4 model = glm::mat4(1.0f);
+        model = glm::rotate(model, glm::radians(g_yaw), glm::vec3(0.0f, 1.0f, 0.0f));
+        // model = glm::rotate(model, glm::radians(g_yaw), g_camera.m_up);
+        // model = glm::rotate(model, glm::radians(g_pitch), g_camera.m_right);
+        //float camera_right_x_z_len = std::pow(std::pow(g_camera.m_right.x, 2) + std::pow(g_camera.m_right.z, 2), 0.5f);
+        //float z_radians = g_pitch * g_camera.m_right.z / camera_right_x_z_len;
+        //model = glm::rotate(model, glm::radians(z_radians), glm::vec3(0.0f, 0.0f, 1.0f));
+        //float x_radians = g_pitch * g_camera.m_right.x / camera_right_x_z_len;
+        //model = glm::rotate(model, glm::radians(x_radians), glm::vec3(1.0f, 0.0f, 0.0f));
+         model = glm::rotate(model, glm::radians(g_pitch), glm::vec3(1.0f, 0.0f, 0.0f));
+        // model = glm::rotate(model, glm::radians(g_pitch), g_camera.m_up);
 
         self_shader.set_mat4("view", view);
         self_shader.set_mat4("projection", projection);
         self_shader.set_mat4("model", model);
-		// shower1.shader.set_uniform3("objectColor", 1.0f, 0.0f, 0.0f);
-		// shader.set_uniform3("objectColor", 0.5f, 0.5f, 0.5f);
+
         self_shader.set_uniform3("lightColor", 1.0f, 1.0f, 1.0f);
         self_shader.set_vec3("viewPos", g_camera.m_position);
-        self_shader.set_uniform3("lightPos", 1.2f, 1.0f, 2.0f);
+        //self_shader.set_vec3("lightPos", light_pos);
+        // self_shader.set_uniform3("lightPos", 1.2f, 1.0f, 2.0f);
+
         for(int i = 0; i < chaos_showers.size(); i++)
         {
             auto& chaos_shower = chaos_showers[i];
             self_shader.set_uniform3("objectColor", mul_display_info[i].r, mul_display_info[i].g, mul_display_info[i].b);
             chaos_shower.show();
         }
-		// shower1.show();
-		// shower1.shader.set_uniform3("objectColor", 0.0f, 1.0f, 0.0f);
-		// shower2.show();
 
 		float currentFrame = glfwGetTime();
 		deltaTime = currentFrame - lastFrame;

@@ -55,6 +55,7 @@ public:
     void process_keyboard(CameraMovement direction, float delta_time);
     void process_mouse_movement(float x_offset, float y_offset, bool constrain_pitch = true);
     void process_mouse_scroll(float y_offset);
+    void scorll_control_position(float y_offset);
 private:
     void update_camera_vectors();
 };

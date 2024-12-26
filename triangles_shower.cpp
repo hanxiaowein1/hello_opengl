@@ -12,8 +12,13 @@ float lastFrame = 0.0f; // Time of last frame
 
 float g_last_x = 400, g_last_y = 300;
 bool g_first_mouse = true;
+bool g_track_mouse = true;
 
-void mouse_callback(GLFWwindow* window, double xpos, double ypos)
+float g_yaw = -90.0f;
+float g_pitch = 0.0f;
+float g_sensitivity = 0.1f;
+
+std::tuple<float, float> mouse_move_handle(GLFWwindow* window, double xpos, double ypos)
 {
 	if (g_first_mouse) // initially set to true
 	{
@@ -26,12 +31,52 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 	float yoffset = g_last_y - ypos; // reversed: y ranges bottom to top
 	g_last_x = xpos;
 	g_last_y = ypos;
+	return {xoffset, yoffset};
+}
+
+void mouse_move_callback(GLFWwindow* window, double xpos, double ypos)
+{
+	if (!g_track_mouse)
+	{
+		g_last_x = xpos;
+		g_last_y = ypos;
+		return;
+	}
+	auto [xoffset, yoffset] = mouse_move_handle(window, xpos, ypos);
 	g_camera.process_mouse_movement(xoffset, yoffset);
+}
+
+void mouse_move_rotate(GLFWwindow* window, double xpos, double ypos)
+{
+	if (!g_track_mouse)
+	{
+		g_last_x = xpos;
+		g_last_y = ypos;
+		return;
+	}
+	auto [xoffset, yoffset] = mouse_move_handle(window, xpos, ypos);
+    g_yaw -= xoffset;
+    g_pitch -= yoffset;
+
+    // 限制 pitch 范围
+    if (g_pitch > 89.0f)
+	{
+        g_pitch = 89.0f;
+	}
+    if (g_pitch < -89.0f)
+	{
+        g_pitch = -89.0f;
+	}
 }
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
 	g_camera.process_mouse_scroll(yoffset);
+}
+
+void scroll_control_distance(GLFWwindow* window, double xoffset, double yoffset)
+{
+	g_camera.scorll_control_position(yoffset);
 }
 
 void processInput2(GLFWwindow* window)
@@ -56,4 +101,20 @@ void processInput2(GLFWwindow* window)
 	{
 		g_camera.process_keyboard(CameraMovement::RIGHT, deltaTime);
 	}
+}
+
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
+{
+    if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
+    {
+        // Code to handle right - click press event
+		// do not track mouse move event
+		g_track_mouse = false;
+    }
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+    {
+        // Code to handle right - click release event
+		// start track mouse move event
+		g_track_mouse = true;
+    }
 }
