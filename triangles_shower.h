@@ -422,12 +422,15 @@ void show_triangles_with_model_viewer(std::vector<DisplayInfo<V, T>> &mul_displa
         // glm::vec3 pitch_vec(pitch_vec_temp.x, pitch_vec_temp.y, pitch_vec_temp.z);
         //model = glm::rotate(model, glm::radians(g_pitch), pitch_vec);
 
-        model = glm::rotate(model, glm::radians(g_yaw), glm::vec3(0.0f, 1.0f, 0.0f));
-        std::cout << "g_camera.m_right:" << std::endl;
-        print_vec3(g_camera.m_right);
-        std::cout << std::endl;
-        model = glm::rotate(model, glm::radians(g_pitch), g_camera.m_right);
+        // model = glm::rotate(model, glm::radians(g_yaw), glm::vec3(0.0f, 1.0f, 0.0f));
+        // std::cout << "g_camera.m_right:" << std::endl;
+        // print_vec3(g_camera.m_right);
+        // std::cout << std::endl;
+        // model = glm::rotate(model, glm::radians(g_pitch), g_camera.m_right);
 
+        glm::mat4 rotation_yaw_matrix = glm::rotate(glm::mat4(1.0f), glm::radians(g_yaw), glm::vec3(0.0f, 1.0f, 0.0f));
+        glm::mat4 rotation_pitch_matrix = glm::rotate(glm::mat4(1.0f), glm::radians(g_pitch), g_camera.m_right);
+        model = rotation_pitch_matrix * rotation_yaw_matrix * model;
 
         self_shader.set_mat4("view", view);
         self_shader.set_mat4("projection", projection);
