@@ -359,6 +359,31 @@ void show_triangles_with_model_viewer(std::vector<DisplayInfo<V, T>> &mul_displa
         chaos_showers.emplace_back(chaos_shower);
     }
 
+    auto print_mat4 = [](const glm::mat4& mat) {
+        for (int i = 0; i < 4; i++)
+        {
+            for (int j = 0; j < 4; j++)
+            {
+                std::cout << mat[i][j] << " ";
+            }
+            std::cout << std::endl;
+        }
+    };
+
+    auto print_vec3 = [](const glm::vec3& vec) {
+        for (int i = 0; i < 3; i++)
+        {
+            std::cout << vec[i] << " ";
+        }
+    };
+
+    auto print_vec4 = [](const glm::vec4& vec) {
+        for (int i = 0; i < 4; i++)
+        {
+            std::cout << vec[i] << " ";
+        }
+    };
+
 	while (!glfwWindowShouldClose(window))
 	{
 		processInput2(window);
@@ -367,18 +392,42 @@ void show_triangles_with_model_viewer(std::vector<DisplayInfo<V, T>> &mul_displa
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         auto view = g_camera.get_view_matrix();
+        // std::cout << "view:" << std::endl;
+        // print_mat4(view);
+        // std::cout << std::endl;
         auto projection = g_camera.get_projection_matrix();
         glm::mat4 model = glm::mat4(1.0f);
-        model = glm::rotate(model, glm::radians(g_yaw), glm::vec3(0.0f, 1.0f, 0.0f));
+
+        // auto view_inverse = glm::inverse(view);
+        // std::cout << "view inverse:" << std::endl;
+        // print_mat4(view_inverse);
+        // std::cout << std::endl;
+
+        // auto yaw_vec_temp = view_inverse * glm::vec4(g_camera.m_up.x, g_camera.m_up.y, g_camera.m_up.z, 0.0f);
+        // std::cout << "yaw_vec_temp:" << std::endl;
+        // print_vec4(yaw_vec_temp);
+        // std::cout << std::endl;
+
+        // glm::vec3 yaw_vec(yaw_vec_temp.x, yaw_vec_temp.y, yaw_vec_temp.z);
+        // std::cout << "yaw_vec:" << std::endl;
+        // print_vec3(yaw_vec);
+        // std::cout << std::endl;
+
+        //model = glm::rotate(model, glm::radians(g_yaw), yaw_vec);
         // model = glm::rotate(model, glm::radians(g_yaw), g_camera.m_up);
-        // model = glm::rotate(model, glm::radians(g_pitch), g_camera.m_right);
-        //float camera_right_x_z_len = std::pow(std::pow(g_camera.m_right.x, 2) + std::pow(g_camera.m_right.z, 2), 0.5f);
-        //float z_radians = g_pitch * g_camera.m_right.z / camera_right_x_z_len;
-        //model = glm::rotate(model, glm::radians(z_radians), glm::vec3(0.0f, 0.0f, 1.0f));
-        //float x_radians = g_pitch * g_camera.m_right.x / camera_right_x_z_len;
-        //model = glm::rotate(model, glm::radians(x_radians), glm::vec3(1.0f, 0.0f, 0.0f));
-         model = glm::rotate(model, glm::radians(g_pitch), glm::vec3(1.0f, 0.0f, 0.0f));
-        // model = glm::rotate(model, glm::radians(g_pitch), g_camera.m_up);
+        // auto pitch_vec_temp = view_inverse * glm::vec4(g_camera.m_right.x, g_camera.m_right.y, g_camera.m_right.z, 0.0f);
+        // std::cout << "pitch_vec_temp:" << std::endl;
+        // print_vec4(pitch_vec_temp);
+        // std::cout << std::endl;
+        // glm::vec3 pitch_vec(pitch_vec_temp.x, pitch_vec_temp.y, pitch_vec_temp.z);
+        //model = glm::rotate(model, glm::radians(g_pitch), pitch_vec);
+
+        model = glm::rotate(model, glm::radians(g_yaw), glm::vec3(0.0f, 1.0f, 0.0f));
+        std::cout << "g_camera.m_right:" << std::endl;
+        print_vec3(g_camera.m_right);
+        std::cout << std::endl;
+        model = glm::rotate(model, glm::radians(g_pitch), g_camera.m_right);
+
 
         self_shader.set_mat4("view", view);
         self_shader.set_mat4("projection", projection);
