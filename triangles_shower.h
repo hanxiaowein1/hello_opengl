@@ -5,6 +5,7 @@
 #include <exception>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <cmath>
 
 #include "opengl_chaos.h"
@@ -89,12 +90,20 @@ std::vector<OpenGLVertex> convert_vertex(const std::vector<V>& vertices, const s
         add_surrounding_triangle(triangle[2], i);
     }
 
+    std::unordered_set<int> reduntant_vertices;
     std::vector<V> interpolated_norms;
-
     for(int i = 0; i < vertices.size(); i++)
     {
-        auto surrounding_triangles = vertex_surrounding_triangles.at(i);
         V interpolated_norm;
+        if(!vertex_surrounding_triangles.contains(i))
+        {
+            // reduntant vertex, no face has this vertex
+            reduntant_vertices.emplace(i);
+            // emplace an empty interpolated norm which will never be used
+            interpolated_norms.emplace_back(interpolated_norm);
+            continue;
+        }
+        auto surrounding_triangles = vertex_surrounding_triangles.at(i);
         interpolated_norm.x = 0;
         interpolated_norm.y = 0;
         interpolated_norm.z = 0;
