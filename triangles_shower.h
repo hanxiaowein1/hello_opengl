@@ -454,7 +454,17 @@ void show_triangles_with_model_viewer(std::vector<DisplayInfo<V, T>> &mul_displa
         {
             auto& chaos_shower = chaos_showers[i];
             self_shader.set_uniform3("objectColor", mul_display_info[i].r, mul_display_info[i].g, mul_display_info[i].b);
-            chaos_shower.show();
+            // chaos_shower.show();
+            chaos_shower.shader.use();
+            glBindVertexArray(chaos_shower.vao);
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+            glDrawElements(GL_TRIANGLES, chaos_shower.indices.size(), GL_UNSIGNED_INT, 0);
+
+            // draw edges
+            self_shader.set_uniform3("objectColor", 0.0f, 0.0f, 0.0f);
+            glLineWidth(2.5);
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+            glDrawElements(GL_TRIANGLES, chaos_shower.indices.size(), GL_UNSIGNED_INT, 0);
         }
 
 		float currentFrame = glfwGetTime();
