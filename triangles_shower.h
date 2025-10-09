@@ -31,6 +31,7 @@ public:
     static float s_yaw;
     static float s_pitch;
     static bool s_track_mouse;
+    static bool s_left_mouse_button_down;
 public:
     static void framebuffer_size_callback(GLFWwindow* window, int width, int height);
     static void mouse_move_rotate(GLFWwindow* window, double xpos, double ypos);
@@ -349,10 +350,6 @@ void show_triangles_with_model_viewer(std::vector<DisplayInfo<V, T>> &mul_displa
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	GLFWwindow* window = glfwCreateWindow(1920, 1080, "LearnOpenGL", NULL, NULL);
-	// glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-	// glfwSetCursorPosCallback(window, mouse_move_rotate);
-	// glfwSetScrollCallback(window, scroll_control_distance);
-    // glfwSetMouseButtonCallback(window, mouse_button_callback);
 	glfwSetFramebufferSizeCallback(window, ModelViewerHandle::framebuffer_size_callback);
 	glfwSetCursorPosCallback(window, ModelViewerHandle::mouse_move_rotate);
 	glfwSetScrollCallback(window, ModelViewerHandle::scroll_control_distance);
@@ -387,31 +384,6 @@ void show_triangles_with_model_viewer(std::vector<DisplayInfo<V, T>> &mul_displa
         chaos_showers.emplace_back(chaos_shower);
     }
 
-    auto print_mat4 = [](const glm::mat4& mat) {
-        for (int i = 0; i < 4; i++)
-        {
-            for (int j = 0; j < 4; j++)
-            {
-                std::cout << mat[i][j] << " ";
-            }
-            std::cout << std::endl;
-        }
-    };
-
-    auto print_vec3 = [](const glm::vec3& vec) {
-        for (int i = 0; i < 3; i++)
-        {
-            std::cout << vec[i] << " ";
-        }
-    };
-
-    auto print_vec4 = [](const glm::vec4& vec) {
-        for (int i = 0; i < 4; i++)
-        {
-            std::cout << vec[i] << " ";
-        }
-    };
-
 	while (!glfwWindowShouldClose(window))
 	{
 		processInput2(window);
@@ -420,44 +392,10 @@ void show_triangles_with_model_viewer(std::vector<DisplayInfo<V, T>> &mul_displa
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         auto view = g_camera.get_view_matrix();
-        // std::cout << "view:" << std::endl;
-        // print_mat4(view);
-        // std::cout << std::endl;
+
         auto projection = g_camera.get_projection_matrix();
         glm::mat4 model = glm::mat4(1.0f);
 
-        // auto view_inverse = glm::inverse(view);
-        // std::cout << "view inverse:" << std::endl;
-        // print_mat4(view_inverse);
-        // std::cout << std::endl;
-
-        // auto yaw_vec_temp = view_inverse * glm::vec4(g_camera.m_up.x, g_camera.m_up.y, g_camera.m_up.z, 0.0f);
-        // std::cout << "yaw_vec_temp:" << std::endl;
-        // print_vec4(yaw_vec_temp);
-        // std::cout << std::endl;
-
-        // glm::vec3 yaw_vec(yaw_vec_temp.x, yaw_vec_temp.y, yaw_vec_temp.z);
-        // std::cout << "yaw_vec:" << std::endl;
-        // print_vec3(yaw_vec);
-        // std::cout << std::endl;
-
-        //model = glm::rotate(model, glm::radians(g_yaw), yaw_vec);
-        // model = glm::rotate(model, glm::radians(g_yaw), g_camera.m_up);
-        // auto pitch_vec_temp = view_inverse * glm::vec4(g_camera.m_right.x, g_camera.m_right.y, g_camera.m_right.z, 0.0f);
-        // std::cout << "pitch_vec_temp:" << std::endl;
-        // print_vec4(pitch_vec_temp);
-        // std::cout << std::endl;
-        // glm::vec3 pitch_vec(pitch_vec_temp.x, pitch_vec_temp.y, pitch_vec_temp.z);
-        //model = glm::rotate(model, glm::radians(g_pitch), pitch_vec);
-
-        // model = glm::rotate(model, glm::radians(g_yaw), glm::vec3(0.0f, 1.0f, 0.0f));
-        // std::cout << "g_camera.m_right:" << std::endl;
-        // print_vec3(g_camera.m_right);
-        // std::cout << std::endl;
-        // model = glm::rotate(model, glm::radians(g_pitch), g_camera.m_right);
-
-        // glm::mat4 rotation_yaw_matrix = glm::rotate(glm::mat4(1.0f), glm::radians(g_yaw), glm::vec3(0.0f, 1.0f, 0.0f));
-        // glm::mat4 rotation_pitch_matrix = glm::rotate(glm::mat4(1.0f), glm::radians(g_pitch), g_camera.m_right);
         glm::mat4 rotation_yaw_matrix = glm::rotate(glm::mat4(1.0f), glm::radians(ModelViewerHandle::s_yaw), glm::vec3(0.0f, 1.0f, 0.0f));
         glm::mat4 rotation_pitch_matrix = glm::rotate(glm::mat4(1.0f), glm::radians(ModelViewerHandle::s_pitch), g_camera.m_right);
         model = rotation_pitch_matrix * rotation_yaw_matrix * model;
@@ -468,14 +406,11 @@ void show_triangles_with_model_viewer(std::vector<DisplayInfo<V, T>> &mul_displa
 
         self_shader.set_uniform3("lightColor", 1.0f, 1.0f, 1.0f);
         self_shader.set_vec3("viewPos", g_camera.m_position);
-        //self_shader.set_vec3("lightPos", light_pos);
-        // self_shader.set_uniform3("lightPos", 1.2f, 1.0f, 2.0f);
 
         for(int i = 0; i < chaos_showers.size(); i++)
         {
             auto& chaos_shower = chaos_showers[i];
             self_shader.set_uniform3("objectColor", mul_display_info[i].r, mul_display_info[i].g, mul_display_info[i].b);
-            // chaos_shower.show();
             chaos_shower.shader.use();
             glBindVertexArray(chaos_shower.vao);
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);

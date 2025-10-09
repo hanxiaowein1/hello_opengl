@@ -23,6 +23,7 @@ float ModelViewerHandle::s_last_y = 300;
 float ModelViewerHandle::s_yaw = -90.0f;
 float ModelViewerHandle::s_pitch = 0.0f;
 bool ModelViewerHandle::s_track_mouse = true;
+bool ModelViewerHandle::s_left_mouse_button_down = false;
 
 
 std::tuple<float, float> mouse_move_handle(GLFWwindow* window, double xpos, double ypos)
@@ -132,7 +133,7 @@ void ModelViewerHandle::framebuffer_size_callback(GLFWwindow* window, int width,
 }
 void ModelViewerHandle::mouse_move_rotate(GLFWwindow* window, double xpos, double ypos)
 {
-	if (!s_track_mouse)
+	if (!s_left_mouse_button_down)
 	{
 		s_last_x = xpos;
 		s_last_y = ypos;
@@ -160,16 +161,15 @@ void ModelViewerHandle::scroll_control_distance(GLFWwindow* window, double xoffs
 
 void ModelViewerHandle::mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 {
-    if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
-    {
-        // Code to handle right - click press event
-		// do not track mouse move event
-		s_track_mouse = false;
-    }
-    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
-    {
-        // Code to handle right - click release event
-		// start track mouse move event
-		s_track_mouse = true;
-    }
+	if(button == GLFW_MOUSE_BUTTON_LEFT)
+	{
+		if(action == GLFW_PRESS)
+		{
+			s_left_mouse_button_down = true;
+		}
+		else
+		{
+			s_left_mouse_button_down = false;
+		}
+	}
 }
