@@ -32,11 +32,13 @@ public:
     static float s_pitch;
     static bool s_track_mouse;
     static bool s_left_mouse_button_down;
+    static bool s_first_mouse;
 public:
     static void framebuffer_size_callback(GLFWwindow* window, int width, int height);
     static void mouse_move_rotate(GLFWwindow* window, double xpos, double ypos);
     static void scroll_control_distance(GLFWwindow* window, double xoffset, double yoffset);
     static void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
+    static std::tuple<float, float> mouse_move_handle(GLFWwindow* window, double xpos, double ypos);
 };
 
 extern Camera g_camera;

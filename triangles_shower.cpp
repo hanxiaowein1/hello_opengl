@@ -24,6 +24,7 @@ float ModelViewerHandle::s_yaw = -90.0f;
 float ModelViewerHandle::s_pitch = 0.0f;
 bool ModelViewerHandle::s_track_mouse = true;
 bool ModelViewerHandle::s_left_mouse_button_down = false;
+bool ModelViewerHandle::s_first_mouse = true;
 
 
 std::tuple<float, float> mouse_move_handle(GLFWwindow* window, double xpos, double ypos)
@@ -131,6 +132,7 @@ void ModelViewerHandle::framebuffer_size_callback(GLFWwindow* window, int width,
 {
 	glViewport(0, 0, width, height);
 }
+
 void ModelViewerHandle::mouse_move_rotate(GLFWwindow* window, double xpos, double ypos)
 {
 	if (!s_left_mouse_button_down)
@@ -166,10 +168,28 @@ void ModelViewerHandle::mouse_button_callback(GLFWwindow* window, int button, in
 		if(action == GLFW_PRESS)
 		{
 			s_left_mouse_button_down = true;
+			s_first_mouse = true;
 		}
 		else
 		{
 			s_left_mouse_button_down = false;
+			s_first_mouse = false;
 		}
 	}
+}
+
+std::tuple<float, float> ModelViewerHandle::mouse_move_handle(GLFWwindow* window, double xpos, double ypos)
+{
+	if (s_first_mouse) // initially set to true
+	{
+		s_last_x = xpos;
+		s_last_y = ypos;
+		s_first_mouse = false;
+	}
+
+	float xoffset = s_last_x - xpos;
+	float yoffset = s_last_y - ypos; // reversed: y ranges bottom to top
+	s_last_x = xpos;
+	s_last_y = ypos;
+	return {xoffset, yoffset};
 }
