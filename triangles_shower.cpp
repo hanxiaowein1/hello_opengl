@@ -18,6 +18,13 @@ float g_yaw = -90.0f;
 float g_pitch = 0.0f;
 float g_sensitivity = 0.1f;
 
+float ModelViewerHandle::s_last_x = 400;
+float ModelViewerHandle::s_last_y = 300;
+float ModelViewerHandle::s_yaw = -90.0f;
+float ModelViewerHandle::s_pitch = 0.0f;
+bool ModelViewerHandle::s_track_mouse = true;
+
+
 std::tuple<float, float> mouse_move_handle(GLFWwindow* window, double xpos, double ypos)
 {
 	if (g_first_mouse) // initially set to true
@@ -116,5 +123,53 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
         // Code to handle right - click release event
 		// start track mouse move event
 		g_track_mouse = true;
+    }
+}
+
+void ModelViewerHandle::framebuffer_size_callback(GLFWwindow* window, int width, int height)
+{
+	glViewport(0, 0, width, height);
+}
+void ModelViewerHandle::mouse_move_rotate(GLFWwindow* window, double xpos, double ypos)
+{
+	if (!s_track_mouse)
+	{
+		s_last_x = xpos;
+		s_last_y = ypos;
+		return;
+	}
+	auto [xoffset, yoffset] = mouse_move_handle(window, xpos, ypos);
+    s_yaw -= xoffset;
+    s_pitch -= yoffset;
+
+    // 限制 pitch 范围
+    if (s_pitch > 89.0f)
+	{
+        s_pitch = 89.0f;
+	}
+    if (s_pitch < -89.0f)
+	{
+        s_pitch = -89.0f;
+	}
+}
+
+void ModelViewerHandle::scroll_control_distance(GLFWwindow* window, double xoffset, double yoffset)
+{
+	g_camera.scorll_control_position(yoffset);
+}
+
+void ModelViewerHandle::mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
+{
+    if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
+    {
+        // Code to handle right - click press event
+		// do not track mouse move event
+		s_track_mouse = false;
+    }
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+    {
+        // Code to handle right - click release event
+		// start track mouse move event
+		s_track_mouse = true;
     }
 }

@@ -23,6 +23,21 @@ public:
     float r, g, b;
 };
 
+class ModelViewerHandle
+{
+public:
+    static float s_last_x;
+    static float s_last_y;
+    static float s_yaw;
+    static float s_pitch;
+    static bool s_track_mouse;
+public:
+    static void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+    static void mouse_move_rotate(GLFWwindow* window, double xpos, double ypos);
+    static void scroll_control_distance(GLFWwindow* window, double xoffset, double yoffset);
+    static void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
+};
+
 extern Camera g_camera;
 extern float deltaTime;  // Time between current frame and last frame
 extern float lastFrame;  // Time of last frame
@@ -334,10 +349,14 @@ void show_triangles_with_model_viewer(std::vector<DisplayInfo<V, T>> &mul_displa
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	GLFWwindow* window = glfwCreateWindow(1920, 1080, "LearnOpenGL", NULL, NULL);
-	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-	glfwSetCursorPosCallback(window, mouse_move_rotate);
-	glfwSetScrollCallback(window, scroll_control_distance);
-    glfwSetMouseButtonCallback(window, mouse_button_callback);
+	// glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+	// glfwSetCursorPosCallback(window, mouse_move_rotate);
+	// glfwSetScrollCallback(window, scroll_control_distance);
+    // glfwSetMouseButtonCallback(window, mouse_button_callback);
+	glfwSetFramebufferSizeCallback(window, ModelViewerHandle::framebuffer_size_callback);
+	glfwSetCursorPosCallback(window, ModelViewerHandle::mouse_move_rotate);
+	glfwSetScrollCallback(window, ModelViewerHandle::scroll_control_distance);
+    glfwSetMouseButtonCallback(window, ModelViewerHandle::mouse_button_callback);
 	if (window == NULL)
 	{
         std::string err_msg = "Failed to create GLFW window";
@@ -437,8 +456,10 @@ void show_triangles_with_model_viewer(std::vector<DisplayInfo<V, T>> &mul_displa
         // std::cout << std::endl;
         // model = glm::rotate(model, glm::radians(g_pitch), g_camera.m_right);
 
-        glm::mat4 rotation_yaw_matrix = glm::rotate(glm::mat4(1.0f), glm::radians(g_yaw), glm::vec3(0.0f, 1.0f, 0.0f));
-        glm::mat4 rotation_pitch_matrix = glm::rotate(glm::mat4(1.0f), glm::radians(g_pitch), g_camera.m_right);
+        // glm::mat4 rotation_yaw_matrix = glm::rotate(glm::mat4(1.0f), glm::radians(g_yaw), glm::vec3(0.0f, 1.0f, 0.0f));
+        // glm::mat4 rotation_pitch_matrix = glm::rotate(glm::mat4(1.0f), glm::radians(g_pitch), g_camera.m_right);
+        glm::mat4 rotation_yaw_matrix = glm::rotate(glm::mat4(1.0f), glm::radians(ModelViewerHandle::s_yaw), glm::vec3(0.0f, 1.0f, 0.0f));
+        glm::mat4 rotation_pitch_matrix = glm::rotate(glm::mat4(1.0f), glm::radians(ModelViewerHandle::s_pitch), g_camera.m_right);
         model = rotation_pitch_matrix * rotation_yaw_matrix * model;
 
         self_shader.set_mat4("view", view);
