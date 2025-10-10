@@ -6,3 +6,35 @@ find_package(glfw3)
 
 include("${CMAKE_CURRENT_LIST_DIR}/@PROJECT_NAME@-targets.cmake")
 check_required_components("@PROJECT_NAME@")
+
+include("${CMAKE_CURRENT_LIST_DIR}/@PROJECT_NAME@ConfigFiles.cmake")
+# Set this variable at config file processing time
+set(${PROJECT_NAME}_install_dir "${CMAKE_CURRENT_LIST_DIR}")
+# Provide function for dependent projects to copy config files
+function(triangles_shower_deploy_config_files TARGET)
+    include("${${PROJECT_NAME}_install_dir}/@PROJECT_NAME@ConfigFiles.cmake")
+    foreach(config_file ${${PROJECT_NAME}_CONFIG_FILES})
+        get_filename_component(filename ${config_file} NAME)
+        get_filename_component(rel_dir ${config_file} DIRECTORY)
+        if(rel_dir)
+            # Create directory first
+            add_custom_command(TARGET ${TARGET} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E make_directory
+                        "$<TARGET_FILE_DIR:${TARGET}>/${rel_dir}"
+            )
+            # Then copy file
+            add_custom_command(TARGET ${TARGET} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                        "${${PROJECT_NAME}_CONFIG_DIR}/${config_file}"
+                        "$<TARGET_FILE_DIR:${TARGET}>/${rel_dir}/${filename}"
+            )
+        else()
+            add_custom_command(TARGET ${TARGET} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                        "${${PROJECT_NAME}_CONFIG_DIR}/${config_file}"
+                        "$<TARGET_FILE_DIR:${TARGET}>/${filename}"
+                COMMENT "Deploying Library config: ${filename}"
+            )
+        endif()
+    endforeach()
+endfunction()

@@ -374,8 +374,8 @@ void show_triangles_with_model_viewer(std::vector<DisplayInfo<V, T>> &mul_displa
 	glEnable(GL_DEPTH_TEST);
 
 	Shader self_shader(
-        "D:\\Projects\\hello_opengl\\shader\\phong_lighting_vs.glsl",
-        "D:\\Projects\\hello_opengl\\shader\\phong_lighting_fs.glsl"
+        "shader\\phong_lighting_vs.glsl",
+        "shader\\phong_lighting_fs.glsl"
     );
     std::vector<ChaosShower> chaos_showers;
     for(auto display_info: mul_display_info)

@@ -54,6 +54,24 @@ install(EXPORT ${PROJECT_NAME}-targets
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}
 )
 
+# Define config files that need to be deployed
+set(${PROJECT_NAME}_CONFIG_FILES
+    shader/phong_lighting_vs.glsl
+    shader/phong_lighting_fs.glsl
+)
+# # Install config files to a separate config directory
+# install(FILES ${${PROJECT_NAME}_CONFIG_FILES}
+#     DESTINATION share/${PROJECT_NAME}/config
+# )
+
+foreach(file IN LISTS ${PROJECT_NAME}_CONFIG_FILES)
+    # Compute relative path under ProjectA
+    get_filename_component(dir "${file}" DIRECTORY)
+    install(FILES "${file}"
+        DESTINATION "share/${PROJECT_NAME}/config/${dir}"
+    )
+endforeach()
+
 # Config 文件的导出（与安装？）
 configure_package_config_file(
     ${PROJECT_SOURCE_DIR}/cmake/config.cmake.in
@@ -81,3 +99,13 @@ install(FILES "${PROJECT_SOURCE_DIR}/chaos_shader.h" DESTINATION include)
 install(FILES "${PROJECT_SOURCE_DIR}/chaos_camera.h" DESTINATION include)
 install(FILES "${PROJECT_SOURCE_DIR}/triangles_shower.h" DESTINATION include)
 
+# Export config files path for dependent projects
+set(CONFIG_INSTALL_DIR "\${CMAKE_CURRENT_LIST_DIR}/../../../share/${PROJECT_NAME}/config")
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/install_files.cmake.in
+    ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigFiles.cmake
+    @ONLY
+)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigFiles.cmake
+    DESTINATION lib/cmake/${PROJECT_NAME}
+)
