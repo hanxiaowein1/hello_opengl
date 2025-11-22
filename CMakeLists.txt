@@ -18,6 +18,7 @@ add_executable(
     mvp_test.cpp
     # camera_move_test.cpp
     phong_lighting_test.cpp
+    triangles_shower_test.cpp
     unit_test.cpp
 )
 target_link_libraries(${PROJECT_NAME}_test glad::glad glfw glm::glm GTest::gtest)

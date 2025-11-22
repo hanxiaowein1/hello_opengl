@@ -23,6 +23,84 @@ public:
     float r, g, b;
 };
 
+/**
+ * @brief move all vertice to origin, or it will behave very strange(when you rotate, the model will rotate around origin point
+ * not in itself center point)
+ * 
+ * @tparam V 
+ * @tparam T 
+ * @param mul_display_info 
+ */
+template <typename V, typename T>
+void move_to_origin(std::vector<DisplayInfo<V, T>> &mul_display_info)
+{
+    // I need to get the min x y z and max x y z
+    auto len = mul_display_info.size();
+    if (len == 0)
+    {
+        return;
+    }
+    if (mul_display_info[0].vertices.size() == 0)
+    {
+        return;
+    }
+    using vertice_type = std::remove_reference_t<decltype(mul_display_info[0].vertices[0][0])>;
+    vertice_type min_x(0), min_y(0), min_z(0);
+    vertice_type max_x(0), max_y(0), max_z(0);
+    min_x = min_y = min_z = std::numeric_limits<vertice_type>::max();
+    max_x = max_y = max_z = std::numeric_limits<vertice_type>::min();
+    for(int i = 0; i < len; i++)
+    {
+        auto& vertices = mul_display_info[i].vertices;
+        for (auto& vertice : vertices)
+        {
+            // 0->x, 1->y, 2->z
+            auto current_x = vertice[0];
+            auto current_y = vertice[1];
+            auto current_z = vertice[2];
+            if (current_x > max_x)
+            {
+                max_x = current_x;
+            }
+            if (current_x < min_x)
+            {
+                min_x = current_x;
+            }
+            if (current_y > max_y)
+            {
+                max_y = current_y;
+            }
+            if (current_y < min_y)
+            {
+                min_y = current_y;
+            }
+            if (current_z > max_z)
+            {
+                max_z = current_z;
+            }
+            if (current_z < min_z)
+            {
+                min_z = current_z;
+            }
+        }
+    }
+    // get the center value of this model
+    auto center_x = (min_x + max_x) / vertice_type(2);
+    auto center_y = (min_y + max_y) / vertice_type(2);
+    auto center_z = (min_z + max_z) / vertice_type(2);
+    // move to the origin
+    for (auto& display_info : mul_display_info)
+    {
+        for (auto& vertex : display_info.vertices)
+        {
+            vertex[0] = vertex[0] - center_x;
+            vertex[1] = vertex[1] - center_y;
+            vertex[2] = vertex[2] - center_z;
+        }
+    }
+    // done, but I need addition unit test to make sure its correctness
+}
+
 class ModelViewerHandle
 {
 public:
@@ -340,13 +418,14 @@ void show_triangles_with_game_player(std::vector<DisplayInfo<V, T>> &mul_display
 template <typename V, typename T>
 void show_triangles_with_model_viewer(std::vector<DisplayInfo<V, T>> &mul_display_info)
 {
-        for (auto& display_info : mul_display_info)
+    for (auto& display_info : mul_display_info)
     {
         if (display_info.normals.size() != display_info.triangles.size())
         {
             throw std::exception("normals triangles size doesn't equal!");
         }
     }
+    move_to_origin(mul_display_info);
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
